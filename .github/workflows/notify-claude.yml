@@ -1,0 +1,83 @@
+name: Notify Claude Board
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, closed]
+  issues:
+    types: [opened, closed, commented]
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Custom notification message'
+        required: false
+        default: 'Manual trigger'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post notification to Claude Board
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const event = context.eventName;
+            const actor = context.actor;
+            const timestamp = new Date().toISOString();
+            
+            let message = '';
+            let status = '';
+            
+            switch(event) {
+              case 'push':
+                message = `🚀 Push to ${context.ref} by @${actor}`;
+                status = 'completed';
+                break;
+              case 'pull_request':
+                const prAction = context.payload.action;
+                message = `🔀 PR #${context.payload.pull_request.number} ${prAction} by @${actor}`;
+                status = prAction;
+                break;
+              case 'issues':
+                const issueAction = context.payload.action;
+                const issueNumber = context.payload.issue.number;
+                // Skip if this is the notification board itself
+                if (issueNumber === 2) return;
+                message = `📋 Issue #${issueNumber} ${issueAction} by @${actor}`;
+                status = issueAction;
+                break;
+              case 'workflow_dispatch':
+                message = `🎯 ${context.payload.inputs.message} by @${actor}`;
+                status = 'manual';
+                break;
+            }
+            
+            const notification = {
+              timestamp: timestamp,
+              event: event,
+              actor: actor,
+              message: message,
+              status: status,
+              repository: context.repo.repo,
+              sha: context.sha.substring(0, 7)
+            };
+            
+            const body = `## 🤖 Automated Notification
+            
+${message}
+
+\`\`\`json
+${JSON.stringify(notification, null, 2)}
+\`\`\`
+
+---
+*Generated at ${timestamp}*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 2,
+              body: body
+            });
