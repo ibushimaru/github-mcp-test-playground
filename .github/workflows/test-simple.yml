@@ -14,9 +14,18 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const timestamp = new Date().toISOString();
+            const event = context.eventName;
+            const body = `## ✅ テスト通知
+            
+            ワークフローが正常に動作しています！
+            
+            - イベント: ${event}
+            - 時刻: ${timestamp}`;
+            
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: 2,
-              body: '## ✅ テスト通知\n\nワークフローが正常に動作しています！\n\n- イベント: ' + context.eventName + '\n- 時刻: ' + new Date().toISOString()
+              body: body
             });
