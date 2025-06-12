@@ -66,14 +66,14 @@ jobs:
             
             const body = `## 🤖 Automated Notification
             
-${message}
-
-\`\`\`json
-${JSON.stringify(notification, null, 2)}
-\`\`\`
-
----
-*Generated at ${timestamp}*`;
+            ${message}
+            
+            \`\`\`json
+            ${JSON.stringify(notification, null, 2)}
+            \`\`\`
+            
+            ---
+            *Generated at ${timestamp}*`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
