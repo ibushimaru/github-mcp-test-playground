@@ -1,0 +1,22 @@
+name: Simple Test Workflow
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simple notification
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 2,
+              body: '## ✅ テスト通知\n\nワークフローが正常に動作しています！\n\n- イベント: ' + context.eventName + '\n- 時刻: ' + new Date().toISOString()
+            });
